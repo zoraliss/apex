@@ -19,17 +19,66 @@
     <div class="auth-sub">Service Lane Coordination</div>
     <div class="auth-card">
       <div id="auth-error" class="auth-error" style="display:none;"></div>
-      <div class="field-group">
-        <label class="flabel">Email</label>
-        <input class="finput" type="email" id="auth-email" placeholder="you@dealership.com" autocomplete="email"/>
+
+      <!-- LOGIN FORM -->
+      <div id="login-form">
+        <div class="field-group">
+          <label class="flabel">Email</label>
+          <input class="finput" type="email" id="auth-email" placeholder="you@dealership.com" autocomplete="email"/>
+        </div>
+        <div class="field-group">
+          <label class="flabel">Password</label>
+          <input class="finput" type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="btn-primary" id="login-btn" onclick="handleLogin()">Sign in</button>
+        <div class="auth-divider">don't have an account?</div>
+        <button class="btn-secondary" onclick="toggleForm('register')">Create account</button>
       </div>
-      <div class="field-group">
-        <label class="flabel">Password</label>
-        <input class="finput" type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"/>
+
+      <!-- REGISTER FORM -->
+      <div id="register-form" style="display:none;">
+        <div class="field-group">
+          <label class="flabel">Full name</label>
+          <input class="finput" type="text" id="reg-name" placeholder="e.g. Zoralis M."/>
+        </div>
+        <div class="field-group">
+          <label class="flabel">Email</label>
+          <input class="finput" type="email" id="reg-email" placeholder="you@dealership.com"/>
+        </div>
+        <div class="field-group">
+          <label class="flabel">Password</label>
+          <input class="finput" type="password" id="reg-password" placeholder="Min. 6 characters"/>
+        </div>
+        <div class="field-group">
+          <label class="flabel">I am a…</label>
+          <div class="role-grid">
+            <div class="role-option" onclick="selectRole('porter')" id="role-porter">
+              <i class="ti ti-car"></i>
+              <div class="role-label">Porter</div>
+            </div>
+            <div class="role-option" onclick="selectRole('advisor')" id="role-advisor">
+              <i class="ti ti-headset"></i>
+              <div class="role-label">Advisor</div>
+            </div>
+            <div class="role-option" onclick="selectRole('manager')" id="role-manager">
+              <i class="ti ti-shield"></i>
+              <div class="role-label">Manager</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-primary" id="register-btn" onclick="handleRegister()">Request access</button>
+        <div class="auth-divider">already have an account?</div>
+        <button class="btn-secondary" onclick="toggleForm('login')">Sign in</button>
       </div>
-      <button class="btn-primary" id="login-btn" onclick="handleLogin()">Sign in</button>
-      <div class="auth-divider">or</div>
-      <button class="btn-secondary" id="register-btn" onclick="handleRegister()">Create account</button>
+
+      <!-- PENDING SCREEN -->
+      <div id="pending-form" style="display:none;">
+        <div class="pending-icon"><i class="ti ti-clock"></i></div>
+        <div class="pending-title">Account pending</div>
+        <div class="pending-text">Your account is waiting for manager approval. You'll be able to sign in once a manager activates your account.</div>
+        <button class="btn-secondary" style="margin-top:16px;" onclick="handleSignOut()">Sign out</button>
+      </div>
+
     </div>
     <div class="auth-footer">Porsche South Orlando · Internal use only</div>
   </div>
@@ -44,7 +93,7 @@
       <div class="header-user">
         <div style="text-align:right;">
           <div class="header-name" id="header-name">—</div>
-          <div class="header-dealer">Porsche South Orlando</div>
+          <div class="header-dealer" id="header-role-label">Porsche South Orlando</div>
         </div>
         <div class="user-av" id="header-av">?</div>
       </div>
@@ -58,12 +107,13 @@
     <div class="stat-cell"><div class="stat-n" id="sn-porters">0</div><div class="stat-l">Porters</div></div>
   </div>
 
-  <div class="nav-bar">
-    <div class="nav-item active" onclick="showTab('board',this)" id="tab-board"><i class="ti ti-layout-list"></i>Board</div>
-    <div class="nav-item" onclick="showTab('runs',this)" id="tab-runs"><i class="ti ti-car"></i>Runs</div>
-    <div class="nav-item" onclick="showTab('map',this)" id="tab-map"><i class="ti ti-map-pin"></i>Map</div>
-    <div class="nav-item" onclick="showTab('comms',this)" id="tab-comms"><i class="ti ti-message"></i>Comms</div>
-    <div class="nav-item" onclick="showTab('new',this)" id="tab-new"><i class="ti ti-plus"></i>New</div>
+  <div class="nav-bar" id="main-nav">
+    <div class="nav-item active" onclick="showTab('board',this)"><i class="ti ti-layout-list"></i>Board</div>
+    <div class="nav-item" onclick="showTab('runs',this)"><i class="ti ti-car"></i>Runs</div>
+    <div class="nav-item" onclick="showTab('map',this)"><i class="ti ti-map-pin"></i>Map</div>
+    <div class="nav-item" onclick="showTab('comms',this)"><i class="ti ti-message"></i>Comms</div>
+    <div class="nav-item advisor-only" onclick="showTab('new',this)" style="display:none;"><i class="ti ti-plus"></i>New</div>
+    <div class="nav-item manager-only" onclick="showTab('admin',this)" style="display:none;"><i class="ti ti-shield"></i>Admin</div>
   </div>
 
   <div class="app-body">
@@ -72,20 +122,21 @@
     <div id="page-board" class="page active">
       <div class="sec-label">Porter status</div>
       <div id="porter-list"><div class="empty-state"><i class="ti ti-users"></i><p>No porters yet</p></div></div>
-      <div style="margin-top:16px;">
-        <div class="sec-label">Set your status</div>
+      <div id="my-status-section" style="margin-top:16px;">
+        <div class="sec-label">My status</div>
         <div class="status-grid">
-          <button class="status-btn s-btn-avail" onclick="setMyStatus('available')"><i class="ti ti-circle-check"></i>Available</button>
-          <button class="status-btn s-btn-enroute" onclick="setMyStatus('enroute')"><i class="ti ti-navigation"></i>En route</button>
-          <button class="status-btn s-btn-return" onclick="setMyStatus('returning')"><i class="ti ti-arrow-back"></i>Returning</button>
-          <button class="status-btn s-btn-busy" onclick="setMyStatus('busy')"><i class="ti ti-clock"></i>On lot</button>
+          <button class="status-btn s-btn-avail" onclick="setMyStatus('available','At dealership')"><i class="ti ti-circle-check"></i>Available</button>
+          <button class="status-btn s-btn-enroute" onclick="setMyStatus('enroute','En route to pickup')"><i class="ti ti-navigation"></i>En route</button>
+          <button class="status-btn s-btn-return" onclick="setMyStatus('returning','Returning to dealership')"><i class="ti ti-arrow-back"></i>Returning</button>
+          <button class="status-btn s-btn-busy" onclick="setMyStatus('busy','On the lot')"><i class="ti ti-clock"></i>On lot</button>
+          <button class="status-btn s-btn-lunch" onclick="setMyStatus('lunch','On lunch break')" style="grid-column:span 2;"><i class="ti ti-tools-kitchen-2"></i>Lunch break</button>
         </div>
       </div>
     </div>
 
     <!-- RUNS TAB -->
     <div id="page-runs" class="page">
-      <div class="sec-label">Tap a run to start navigation</div>
+      <div class="sec-label">Tap a run to open</div>
       <div id="run-list"><div class="empty-state"><i class="ti ti-car"></i><p>No active runs</p></div></div>
     </div>
 
@@ -96,22 +147,20 @@
         <span class="nearby-txt" id="nearby-txt">Runs nearby — consider combining</span>
       </div>
       <div class="map-wrap">
-        <div id="map-pins-container">
-          <svg id="map-svg" viewBox="0 0 352 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
-            <rect width="352" height="210" fill="#0d0d0d"/>
-            <line x1="0" y1="85" x2="352" y2="85" stroke="#1e1e1e" stroke-width="10"/>
-            <line x1="0" y1="140" x2="352" y2="140" stroke="#1e1e1e" stroke-width="6"/>
-            <line x1="105" y1="0" x2="105" y2="210" stroke="#1e1e1e" stroke-width="7"/>
-            <line x1="230" y1="0" x2="230" y2="210" stroke="#1e1e1e" stroke-width="5"/>
-            <rect x="20" y="30" width="55" height="32" rx="3" fill="#161616"/>
-            <rect x="130" y="95" width="65" height="26" rx="3" fill="#161616"/>
-            <rect x="248" y="38" width="70" height="36" rx="3" fill="#161616"/>
-            <circle cx="176" cy="105" r="8" fill="#1e2830" stroke="#3a5a70" stroke-width="1"/>
-            <text x="176" y="109" text-anchor="middle" font-size="8" fill="#6ab" font-family="sans-serif" font-weight="500">H</text>
-            <text x="176" y="122" text-anchor="middle" font-size="8" fill="#3a5a70" font-family="sans-serif">Dealership</text>
-            <g id="map-run-pins"></g>
-          </svg>
-        </div>
+        <svg id="map-svg" viewBox="0 0 352 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+          <rect width="352" height="210" fill="#0d0d0d"/>
+          <line x1="0" y1="85" x2="352" y2="85" stroke="#1e1e1e" stroke-width="10"/>
+          <line x1="0" y1="140" x2="352" y2="140" stroke="#1e1e1e" stroke-width="6"/>
+          <line x1="105" y1="0" x2="105" y2="210" stroke="#1e1e1e" stroke-width="7"/>
+          <line x1="230" y1="0" x2="230" y2="210" stroke="#1e1e1e" stroke-width="5"/>
+          <rect x="20" y="30" width="55" height="32" rx="3" fill="#161616"/>
+          <rect x="130" y="95" width="65" height="26" rx="3" fill="#161616"/>
+          <rect x="248" y="38" width="70" height="36" rx="3" fill="#161616"/>
+          <circle cx="176" cy="105" r="8" fill="#1e2830" stroke="#3a5a70" stroke-width="1"/>
+          <text x="176" y="109" text-anchor="middle" font-size="8" fill="#6ab" font-family="sans-serif" font-weight="500">H</text>
+          <text x="176" y="122" text-anchor="middle" font-size="8" fill="#3a5a70" font-family="sans-serif">Dealership</text>
+          <g id="map-run-pins"></g>
+        </svg>
       </div>
       <div class="sec-label" style="margin-top:10px;">Active runs</div>
       <div id="map-run-list"></div>
@@ -119,22 +168,22 @@
 
     <!-- COMMS TAB -->
     <div id="page-comms" class="page">
-      <div class="sec-label">Team notes</div>
-      <div id="comms-thread" class="comms-thread"></div>
+      <div class="sec-label">Team messages</div>
+      <div id="comms-thread" class="comms-thread"><div class="empty-state" style="padding:16px;"><i class="ti ti-message"></i><p>No messages yet</p></div></div>
       <div class="comms-input-row">
         <input class="finput" type="text" id="comms-msg" placeholder="Message the team…" style="flex:1;" onkeydown="if(event.key==='Enter')sendTeamMessage()"/>
         <button class="btn-send" onclick="sendTeamMessage()"><i class="ti ti-send"></i></button>
       </div>
-      <div class="sec-label" style="margin-top:16px;">Quick updates</div>
+      <div class="sec-label" style="margin-top:12px;">Quick updates</div>
       <div class="quick-btns">
         <button class="qbtn" onclick="sendQuickMsg('Heading back to dealership now')">Heading back</button>
         <button class="qbtn" onclick="sendQuickMsg('On my way to pickup')">On my way</button>
         <button class="qbtn" onclick="sendQuickMsg('At the pickup location')">At location</button>
-        <button class="qbtn" onclick="sendQuickMsg('Run complete')">Run complete</button>
+        <button class="qbtn" onclick="sendQuickMsg('Run complete — back soon')">Run complete</button>
       </div>
     </div>
 
-    <!-- NEW RUN TAB -->
+    <!-- NEW RUN TAB (advisor + manager only) -->
     <div id="page-new" class="page">
       <div class="sec-label">New run</div>
       <div class="new-form">
@@ -148,17 +197,15 @@
         </div>
         <div class="field-group">
           <label class="flabel">Pickup address</label>
-          <input class="finput" type="text" id="inp-addr" placeholder="e.g. 4801 W Colonial Dr"/>
+          <input class="finput" type="text" id="inp-addr" placeholder="e.g. 4801 W Colonial Dr, Orlando FL"/>
         </div>
         <div class="field-group">
           <label class="flabel">Assign porter</label>
-          <select class="fselect" id="inp-porter">
-            <option value="">Unassigned</option>
-          </select>
+          <select class="fselect" id="inp-porter"><option value="">Unassigned</option></select>
         </div>
         <div class="field-group">
           <label class="flabel">Advisor</label>
-          <input class="finput" type="text" id="inp-advisor" placeholder="e.g. Sarah M."/>
+          <input class="finput" type="text" id="inp-advisor" placeholder="Your name"/>
         </div>
         <div class="field-group">
           <label class="flabel">Run type</label>
@@ -172,12 +219,20 @@
         </div>
         <div class="field-group">
           <label class="flabel" style="color:#333;">Customer phone</label>
-          <input class="finput" type="tel" id="inp-phone" placeholder="SMS disabled during testing" disabled style="opacity:0.4;cursor:not-allowed;"/>
-          <div style="font-size:10px;color:#444;margin-top:4px;"><i class="ti ti-info-circle" style="font-size:11px;vertical-align:-1px;"></i> SMS notifications off · internal test mode</div>
+          <input class="finput" type="tel" id="inp-phone" placeholder="SMS disabled · test mode" disabled style="opacity:0.35;cursor:not-allowed;"/>
+          <div style="font-size:10px;color:#444;margin-top:3px;"><i class="ti ti-info-circle" style="font-size:11px;vertical-align:-1px;"></i> SMS off · internal testing</div>
         </div>
       </div>
       <button class="btn-primary" onclick="createRun()" style="margin-top:12px;">Create run</button>
-      <div class="confirm-box" id="run-confirm"><i class="ti ti-circle-check"></i> Run created successfully</div>
+      <div class="confirm-box" id="run-confirm"><i class="ti ti-circle-check"></i> Run created</div>
+    </div>
+
+    <!-- ADMIN TAB (manager only) -->
+    <div id="page-admin" class="page">
+      <div class="sec-label">Pending approvals</div>
+      <div id="pending-list"><div class="empty-state"><i class="ti ti-user-check"></i><p>No pending accounts</p></div></div>
+      <div class="sec-label" style="margin-top:16px;">All team members</div>
+      <div id="admin-user-list"></div>
     </div>
 
   </div>
@@ -204,9 +259,8 @@
     </div>
   </div>
 
-  <!-- SIGN OUT -->
   <div style="padding:16px;text-align:center;">
-    <button onclick="handleSignOut()" style="background:transparent;border:none;color:#333;font-size:12px;cursor:pointer;font-family:sans-serif;letter-spacing:0.04em;">Sign out</button>
+    <button onclick="handleSignOut()" style="background:transparent;border:none;color:#333;font-size:12px;cursor:pointer;font-family:inherit;letter-spacing:0.04em;">Sign out</button>
   </div>
 
 </div>
