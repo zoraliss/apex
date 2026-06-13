@@ -211,7 +211,7 @@ function renderMapRuns(runs) {
     <div class="run-card" onclick="window.openRun('${r.id}')">
       <div class="run-top">
         <div><div class="run-name">${r.customer} <span class="run-id">${r.runId||""}</span></div><div class="run-car">${r.car||"—"}</div></div>
-        <span class="pill ${r.porter&&r.porter!=="Unassigned"?"p-enroute":"p-unassign'}">${r.porter||"Unassigned"}</span>
+        <span class="pill ${r.porter&&r.porter!=="Unassigned"?"p-enroute":"p-unassign"}">${r.porter||"Unassigned"}</span>
       </div>
       <div class="run-addr"><i class="ti ti-map-pin" style="font-size:12px"></i>${r.address||"—"}</div>
     </div>`).join("");
